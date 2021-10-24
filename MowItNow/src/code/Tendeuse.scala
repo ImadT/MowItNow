@@ -1,7 +1,8 @@
 // Scala File handling program
-import scala.io.Source
 // Scala collection package
+import java.io.FileNotFoundException
 import scala.collection.mutable
+import scala.io.Source
 
 
 /*
@@ -69,7 +70,7 @@ class Tendeuse(var x:Int = 0, var y:Int = 0, var orientation:Char = 'N', var pel
    */
   def  executer_les_instructions(): Unit ={
     // Si la tendeuse se trouve innitialement dans la pelouse alors on effectue le process de mouvement
-    if(y>0 && y<=pelouse(1) && x>0 && x<=pelouse(0)) {
+    if(y>=0 && y<=pelouse(1) && x>=0 && x<=pelouse(0)) {
       for (i <- list_instructions) {
         instruction_suivante(i)
       }
@@ -82,46 +83,50 @@ class Tendeuse(var x:Int = 0, var y:Int = 0, var orientation:Char = 'N', var pel
 }
 
 
-object Exercice1 {
+object Execution extends App {//Exercice1
 
-  def main(args: Array[String]): Unit = {
-
-    println("Hello world!")
-
-
-    // la collection pour stocker les tendeuses
+  //def main(args: Array[String]): Unit = { //main
+    // la collection pour stocker les objets "Tendeuse".
     val tendeusesMap:mutable.Map[String,Tendeuse] = scala.collection.mutable.Map()
-    //tendeusesMap("tendeuse") = tendeuse
 
 
+    // instanciation des variables.
+    var iterator_ligne:Int = 1 // sert comme compteur des lignes recuperées à partir du Buffer "fSource"
+    var x = 0
+    var y = 0
+    var orientation = 'N'
+    var pelouse = new Array[Int](2)
+    var instructions:Array[Char] = Array()
 
+
+  // Block try/Catch
     try{
+      // fSource est une source tamponnée
       val fSource = Source.fromFile("./src/resources/test1.txt")
 
-
-      var iterator_ligne:Int = 1
-      var x = 0
-      var y = 0
-      var orientation = 'N'
-      var pelouse = new Array[Int](2)
-      var instructions:Array[Char] = Array()
-
-
+      // recupérer les informations du fichier de pilotage donné en entré.
       for(line<-fSource.getLines)
       {
-        if (iterator_ligne == 1){
-          val pelouseStr:Array[String] = line.split(" ")
+        if (iterator_ligne == 1){ // Si la première ligne on recupère la dimension de la pelouse
+          val pelouseStr:Array[String] = line.split(" ") // récupérer la première ligne + diviser par l'espace
           //pelouse = for ( element <- pelouseStr ) yield element.toInt
-          pelouse = pelouseStr.map(_.toInt)
+          pelouse = pelouseStr.map(_.toInt) // map pour convertir les élements du tableau "pelouseStr" de "String" vers "Int"
 
           iterator_ligne +=1
         }
         else{
-          if(iterator_ligne%2==0){
+          if(iterator_ligne%2==0){  // Si la ligne est paire alors il s'agie de l'information sur la position initiale de la tendeuse
             val position_initial_du_tendeuse:Array[String] = line.split(" ")
             x = position_initial_du_tendeuse(0).toInt
             y = position_initial_du_tendeuse(1).toInt
-            orientation = position_initial_du_tendeuse(2).charAt(0)
+            if(position_initial_du_tendeuse(2).charAt(0).isLetter){
+              orientation = position_initial_du_tendeuse(2).charAt(0)
+            }
+            else{
+              // lancer une exception
+              throw new Exception(s"Erreur s'est produite dans la ligne $iterator_ligne, faut saisir une lettre pour l'orientation !")
+            }
+
 
             iterator_ligne +=1
           }
@@ -146,7 +151,9 @@ object Exercice1 {
       // closing file
       fSource.close()
     } catch {
-      case ex : Exception => ex.printStackTrace()
+      case _ : FileNotFoundException =>  println("Une erreur s'est produite : le chemin fourni pour récupérer le pilotage est erroné")//ex.printStackTrace()
+      case _ : NumberFormatException  => println(f"Une erreur s'est produite : à revoir la ligne $iterator_ligne du fichier de pilotage, faut saisir des chiffres pour indiquer la position de la tendeuse ou bien les dimensions de la pelouse!")
+      case e : Throwable => println(e)
     }
-  }
+  //}
 }
